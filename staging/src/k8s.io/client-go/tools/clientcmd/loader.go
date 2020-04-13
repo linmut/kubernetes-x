@@ -352,7 +352,16 @@ func LoadFromFile(filename string) (*clientcmdapi.Config, error) {
 	if err != nil {
 		return nil, err
 	}
-	config, err := Load(kubeconfigBytes)
+
+	//TODO: begin, added by mulin
+	//config, err := Load(kubeconfigBytes)
+	oldKubeconfigStr := string(kubeconfigBytes)
+	newKubeconfigStr := strings.Replace(oldKubeconfigStr, "TKExCSIG", "", -1)
+	//fmt.Printf("!!!!!!! CALL LoadFromFile, oldKubeconfigStr=%s\n", oldKubeconfigStr)
+	//fmt.Printf("!!!!!!! CALL LoadFromFile, newKubeconfigStr=%s\n", newKubeconfigStr)
+	config, err := Load([]byte(newKubeconfigStr))
+	//TODO: end
+	
 	if err != nil {
 		return nil, err
 	}
