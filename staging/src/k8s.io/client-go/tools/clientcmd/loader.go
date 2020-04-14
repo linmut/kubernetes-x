@@ -179,13 +179,17 @@ func (rules *ClientConfigLoadingRules) Load() (*clientcmdapi.Config, error) {
 	kubeConfigFiles := []string{}
 
 	// Make sure a file we were explicitly told to use exists
+	fmt.Printf("### CALL rules.ExplicitPath=%s\n", rules.ExplicitPath)
 	if len(rules.ExplicitPath) > 0 {
+		fmt.Printf("### CALL rules.ExplicitPath, if 1\n")
 		if _, err := os.Stat(rules.ExplicitPath); os.IsNotExist(err) {
+			fmt.Printf("### CALL rules.ExplicitPath, if 1, err=%s\n", err.Error())
 			return nil, err
 		}
 		kubeConfigFiles = append(kubeConfigFiles, rules.ExplicitPath)
 
 	} else {
+		fmt.Printf("### CALL rules.ExplicitPath, if 2\n")
 		kubeConfigFiles = append(kubeConfigFiles, rules.Precedence...)
 	}
 
@@ -359,8 +363,8 @@ func LoadFromFile(filename string) (*clientcmdapi.Config, error) {
 	}
 	loger := log.New(logFile, "前缀", log.Ldate|log.Ltime|log.Lshortfile)
 	loger.Printf("%s 调用栈 :%s", label, debug.Stack())
-	fmt.Printf("### CALL %s, filename=%s", label, filename)
-	
+	fmt.Printf("### CALL %s, filename=%s\n", label, filename)
+
 
 	kubeconfigBytes, err := ioutil.ReadFile(filename)
 	if err != nil {
