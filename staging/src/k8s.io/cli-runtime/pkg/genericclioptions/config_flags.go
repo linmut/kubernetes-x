@@ -191,7 +191,7 @@ func (f *ConfigFlags) toRawKubeConfigLoader() clientcmd.ClientConfig {
 	if f.ClusterName != nil {
 		overrides.Context.Cluster = *f.ClusterName
 	} else{
-		err = fmt.Errorf("%s", "--cluster= 参数不能为空，必须指定集群id，前缀为'cls-'")
+		err = fmt.Errorf("--cluster= 参数不能为空，必须指定集群id，前缀为'cls-'")
 		panic(err)
 	}
 
@@ -203,7 +203,7 @@ func (f *ConfigFlags) toRawKubeConfigLoader() clientcmd.ClientConfig {
 	if f.Namespace != nil {
 		overrides.Context.Namespace = *f.Namespace
 	} else{
-		err = fmt.Errorf("%s", "-n 或--namespace= 参数不能为空，必须指定业务的命名空间，前缀为'ns-'")
+		err = fmt.Errorf("-n 或--namespace= 参数不能为空，必须指定业务的命名空间，前缀为'ns-'")
 		panic(err)
 	}
 
@@ -214,12 +214,11 @@ func (f *ConfigFlags) toRawKubeConfigLoader() clientcmd.ClientConfig {
 	//TODO: modified by mulin, 额外判断
 	if f.KubeConfig != nil {
 		//loadingRules.ExplicitPath = *f.KubeConfig
-		fmt.Printf("f.KubeConfig=%s\n", *f.KubeConfig)
-		path := homedir.HomeDir() + "/.kube/config"
-		if path != *f.KubeConfig {
-			err = fmt.Errorf("%s", "--KubeConfig= 参数不能非空，不支持指定特定的KubeConfig")
+		if len(*f.KubeConfig) >0 {
+			err = fmt.Errorf("--kubeconfig= 参数不能非空(%s)，不支持指定特定的kubeconfig", *f.KubeConfig)
 			panic(err)
 		}
+
 	}
 	fmt.Printf("homedir.HomeDir()=%s\n", homedir.HomeDir())
 	dir := "/root/.kube/"
@@ -228,6 +227,7 @@ func (f *ConfigFlags) toRawKubeConfigLoader() clientcmd.ClientConfig {
 	myKubeconfig := dir + cluster + "_" + namespace + ".kubeconfig"
 	fmt.Printf("myKubeconfig=%s\n", myKubeconfig)
 	loadingRules.ExplicitPath = myKubeconfig
+
 
 
 	var clientConfig clientcmd.ClientConfig
