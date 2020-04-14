@@ -17,9 +17,11 @@ limitations under the License.
 package genericclioptions
 
 import (
+	"log"
 	"os"
 	"path/filepath"
 	"regexp"
+	"runtime/debug"
 	"strings"
 	"sync"
 	"time"
@@ -123,6 +125,16 @@ func (f *ConfigFlags) ToRawKubeConfigLoader() clientcmd.ClientConfig {
 }
 
 func (f *ConfigFlags) toRawKubeConfigLoader() clientcmd.ClientConfig {
+	label := "toRawKubeConfigLoader"
+	file := fmt.Sprintf("/data/home/mulin/k8s-debug/%s_%s.txt", label, time.Now().Format("2006-01-02_15:04:05.000"))
+	logFile, err := os.OpenFile(file, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0766)
+	if nil != err {
+		panic(err)
+	}
+	loger := log.New(logFile, "前缀", log.Ldate|log.Ltime|log.Lshortfile)
+	loger.Printf("%s 调用栈 :%s", label, debug.Stack())
+	fmt.Printf("### 调用栈 %s\n", label)
+
 	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
 	// use the standard defaults for this client command
 	// DEPRECATED: remove and replace with something more accurate
@@ -253,6 +265,16 @@ func (f *ConfigFlags) ToRESTMapper() (meta.RESTMapper, error) {
 
 // AddFlags binds client configuration flags to a given flagset
 func (f *ConfigFlags) AddFlags(flags *pflag.FlagSet) {
+	label := "AddFlags"
+	file := fmt.Sprintf("/data/home/mulin/k8s-debug/%s_%s.txt", label, time.Now().Format("2006-01-02_15:04:05.000"))
+	logFile, err := os.OpenFile(file, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0766)
+	if nil != err {
+		panic(err)
+	}
+	loger := log.New(logFile, "前缀", log.Ldate|log.Ltime|log.Lshortfile)
+	loger.Printf("%s 调用栈 :%s", label, debug.Stack())
+	fmt.Printf("### 调用栈 %s\n", label)
+
 	if f.KubeConfig != nil {
 		fmt.Printf("### CALL AddFlags, 1, *f.KubeConfig=%s\n", *f.KubeConfig)
 		flags.StringVar(f.KubeConfig, "kubeconfig", *f.KubeConfig, "Path to the kubeconfig file to use for CLI requests.")
