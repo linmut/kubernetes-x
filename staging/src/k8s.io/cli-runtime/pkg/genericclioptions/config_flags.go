@@ -124,6 +124,7 @@ func (f *ConfigFlags) ToRawKubeConfigLoader() clientcmd.ClientConfig {
 	return f.toRawKubeConfigLoader()
 }
 
+//TODO: modified by mulin, 解析参数，并生产新的kubeconfig路径
 func (f *ConfigFlags) toRawKubeConfigLoader() clientcmd.ClientConfig {
 	label := "toRawKubeConfigLoader"
 	file := fmt.Sprintf("/data/home/mulin/k8s-debug/%s_%s.txt", label, time.Now().Format("2006-01-02_15:04:05.000"))
@@ -140,10 +141,10 @@ func (f *ConfigFlags) toRawKubeConfigLoader() clientcmd.ClientConfig {
 	// DEPRECATED: remove and replace with something more accurate
 	loadingRules.DefaultClientConfig = &clientcmd.DefaultClientConfig
 
-	if f.KubeConfig != nil {
-		loadingRules.ExplicitPath = *f.KubeConfig
-		fmt.Printf("@@@ CALL toRawKubeConfigLoader, loadingRules.ExplicitPath=%s\n", *f.KubeConfig)
-	}
+	// 移动到判断完namespace和cluster之后
+	//if f.KubeConfig != nil {
+	//	loadingRules.ExplicitPath = *f.KubeConfig
+	//}
 
 	overrides := &clientcmd.ConfigOverrides{ClusterDefaults: clientcmd.ClusterDefaults}
 
@@ -185,20 +186,41 @@ func (f *ConfigFlags) toRawKubeConfigLoader() clientcmd.ClientConfig {
 	if f.Context != nil {
 		overrides.CurrentContext = *f.Context
 	}
+
+	//TODO: modified by mulin, 额外判断
 	if f.ClusterName != nil {
 		overrides.Context.Cluster = *f.ClusterName
-		fmt.Printf("@@@ CALL toRawKubeConfigLoader, overrides.Context.ClusterName=%s\n", *f.ClusterName)
+	} else{
+		err = fmt.Errorf("%s", "--cluster= 参数不能为空，必须指定集群id，前缀为'cls-'")
+		panic(err)
 	}
+
 	if f.AuthInfoName != nil {
 		overrides.Context.AuthInfo = *f.AuthInfoName
 	}
+
+	//TODO: modified by mulin, 额外判断
 	if f.Namespace != nil {
 		overrides.Context.Namespace = *f.Namespace
-		fmt.Printf("@@@ CALL toRawKubeConfigLoader, overrides.Context.Namespace=%s\n", *f.Namespace)
+	} else{
+		err = fmt.Errorf("%s", "-n 或--namespace= 参数不能为空，必须指定业务的命名空间，前缀为'ns-'")
+		panic(err)
 	}
 
 	if f.Timeout != nil {
 		overrides.Timeout = *f.Timeout
+	}
+
+	//TODO: modified by mulin, 额外判断
+	if f.KubeConfig != nil {
+		//loadingRules.ExplicitPath = *f.KubeConfig
+		err = fmt.Errorf("%s", "--KubeConfig= 参数不能非空，不支持指定特定的KubeConfig")
+		panic(err)
+	} else {
+		cluster := *f.ClusterName
+		namespace := *f.Namespace
+		kubeconfig := cluster + "_" + namespace + ".kubeconfig"
+		loadingRules.ExplicitPath = kubeconfig
 	}
 
 	var clientConfig clientcmd.ClientConfig
@@ -265,85 +287,75 @@ func (f *ConfigFlags) ToRESTMapper() (meta.RESTMapper, error) {
 
 // AddFlags binds client configuration flags to a given flagset
 func (f *ConfigFlags) AddFlags(flags *pflag.FlagSet) {
-	label := "AddFlags"
-	file := fmt.Sprintf("/data/home/mulin/k8s-debug/%s_%s.txt", label, time.Now().Format("2006-01-02_15:04:05.000"))
-	logFile, err := os.OpenFile(file, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0766)
-	if nil != err {
-		panic(err)
-	}
-	loger := log.New(logFile, "前缀", log.Ldate|log.Ltime|log.Lshortfile)
-	loger.Printf("%s 调用栈 :%s", label, debug.Stack())
-	fmt.Printf("### 调用栈 %s\n", label)
-
 	if f.KubeConfig != nil {
-		fmt.Printf("### CALL AddFlags, 1, *f.KubeConfig=%s\n", *f.KubeConfig)
+		//fmt.Printf("### CALL AddFlags, 1, *f.KubeConfig=%s\n", *f.KubeConfig)
 		flags.StringVar(f.KubeConfig, "kubeconfig", *f.KubeConfig, "Path to the kubeconfig file to use for CLI requests.")
 	}
 	if f.CacheDir != nil {
-		fmt.Printf("### CALL AddFlags, 2, *f.CacheDir=%s\n", *f.CacheDir)
+		//fmt.Printf("### CALL AddFlags, 2, *f.CacheDir=%s\n", *f.CacheDir)
 		flags.StringVar(f.CacheDir, flagHTTPCacheDir, *f.CacheDir, "Default HTTP cache directory")
 	}
 
 	// add config options
 	if f.CertFile != nil {
-		fmt.Printf("### CALL AddFlags, 3, *f.CertFile=%s\n", *f.CertFile)
+		//fmt.Printf("### CALL AddFlags, 3, *f.CertFile=%s\n", *f.CertFile)
 		flags.StringVar(f.CertFile, flagCertFile, *f.CertFile, "Path to a client certificate file for TLS")
 	}
 	if f.KeyFile != nil {
-		fmt.Printf("### CALL AddFlags, 4, *f.KeyFile=%s\n", *f.KeyFile)
+		//fmt.Printf("### CALL AddFlags, 4, *f.KeyFile=%s\n", *f.KeyFile)
 		flags.StringVar(f.KeyFile, flagKeyFile, *f.KeyFile, "Path to a client key file for TLS")
 	}
 	if f.BearerToken != nil {
-		fmt.Printf("### CALL AddFlags, 5, *f.BearerToken=%s\n", *f.BearerToken)
+		//fmt.Printf("### CALL AddFlags, 5, *f.BearerToken=%s\n", *f.BearerToken)
 		flags.StringVar(f.BearerToken, flagBearerToken, *f.BearerToken, "Bearer token for authentication to the API server")
 	}
 	if f.Impersonate != nil {
-		fmt.Printf("### CALL AddFlags, 6, *f.Impersonate=%s\n", *f.Impersonate)
+		//fmt.Printf("### CALL AddFlags, 6, *f.Impersonate=%s\n", *f.Impersonate)
 		flags.StringVar(f.Impersonate, flagImpersonate, *f.Impersonate, "Username to impersonate for the operation")
 	}
 	if f.ImpersonateGroup != nil {
-		fmt.Printf("### CALL AddFlags, 7, *f.ImpersonateGroup=%s\n", *f.ImpersonateGroup)
+		//fmt.Printf("### CALL AddFlags, 7, *f.ImpersonateGroup=%s\n", *f.ImpersonateGroup)
 		flags.StringArrayVar(f.ImpersonateGroup, flagImpersonateGroup, *f.ImpersonateGroup, "Group to impersonate for the operation, this flag can be repeated to specify multiple groups.")
 	}
 	if f.Username != nil {
-		fmt.Printf("### CALL AddFlags, 8, *f.Username=%s\n", *f.Username)
+		//fmt.Printf("### CALL AddFlags, 8, *f.Username=%s\n", *f.Username)
 		flags.StringVar(f.Username, flagUsername, *f.Username, "Username for basic authentication to the API server")
 	}
 	if f.Password != nil {
-		fmt.Printf("### CALL AddFlags, 9, *f.Password=%s\n", *f.Password)
+		//fmt.Printf("### CALL AddFlags, 9, *f.Password=%s\n", *f.Password)
 		flags.StringVar(f.Password, flagPassword, *f.Password, "Password for basic authentication to the API server")
 	}
 	if f.ClusterName != nil {
-		fmt.Printf("### CALL AddFlags, 10, *f.ClusterName=%s\n", *f.ClusterName)
+		//fmt.Printf("### CALL AddFlags, 10, *f.ClusterName=%s\n", *f.ClusterName)
 		flags.StringVar(f.ClusterName, flagClusterName, *f.ClusterName, "The name of the kubeconfig cluster to use")
 	}
 	if f.AuthInfoName != nil {
-		fmt.Printf("### CALL AddFlags, 11, *f.AuthInfoName=%s\n", *f.AuthInfoName)
+		//fmt.Printf("### CALL AddFlags, 11, *f.AuthInfoName=%s\n", *f.AuthInfoName)
 		flags.StringVar(f.AuthInfoName, flagAuthInfoName, *f.AuthInfoName, "The name of the kubeconfig user to use")
 	}
 	if f.Namespace != nil {
-		fmt.Printf("### CALL AddFlags, 12, *f.Namespace=%s\n", *f.Namespace)
+		//fmt.Printf("### CALL AddFlags, 12, *f.Namespace=%s\n", *f.Namespace)
 		flags.StringVarP(f.Namespace, flagNamespace, "n", *f.Namespace, "If present, the namespace scope for this CLI request")
 	}
 	if f.Context != nil {
-		fmt.Printf("### CALL AddFlags, 13, *f.Context=%s\n", *f.Context)
+		//fmt.Printf("### CALL AddFlags, 13, *f.Context=%s\n", *f.Context)
 		flags.StringVar(f.Context, flagContext, *f.Context, "The name of the kubeconfig context to use")
 	}
 
 	if f.APIServer != nil {
-		fmt.Printf("### CALL AddFlags, 14, *f.APIServer=%s\n", *f.APIServer)
+		//fmt.Printf("### CALL AddFlags, 14, *f.APIServer=%s\n", *f.APIServer)
 		flags.StringVarP(f.APIServer, flagAPIServer, "s", *f.APIServer, "The address and port of the Kubernetes API server")
 	}
 	if f.Insecure != nil {
-		fmt.Printf("### CALL AddFlags, 15, *f.Insecure=%s\n", *f.Insecure)
+		//fmt.Printf("### CALL AddFlags, 15, *f.Insecure=%s\n", *f.Insecure)
 		flags.BoolVar(f.Insecure, flagInsecure, *f.Insecure, "If true, the server's certificate will not be checked for validity. This will make your HTTPS connections insecure")
 	}
 	if f.CAFile != nil {
-		fmt.Printf("### CALL AddFlags, 16, *f.CAFile=%s\n", *f.CAFile)
+		//fmt.Printf("### CALL AddFlags, 16, *f.CAFile=%s\n", *f.CAFile)
 		flags.StringVar(f.CAFile, flagCAFile, *f.CAFile, "Path to a cert file for the certificate authority")
 	}
 	if f.Timeout != nil {
-		fmt.Printf("### CALL AddFlags, 17, *f.Timeout=%s\n", *f.Timeout)
+		//fmt.Printf("### CALL AddFlags, 17, *f.Timeout=%s\n", *f.Timeout)
 		flags.StringVar(f.Timeout, flagTimeout, *f.Timeout, "The length of time to wait before giving up on a single server request. Non-zero values should contain a corresponding time unit (e.g. 1s, 2m, 3h). A value of zero means don't timeout requests.")
 	}
 
