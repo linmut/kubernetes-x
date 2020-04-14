@@ -130,6 +130,7 @@ func (f *ConfigFlags) toRawKubeConfigLoader() clientcmd.ClientConfig {
 
 	if f.KubeConfig != nil {
 		loadingRules.ExplicitPath = *f.KubeConfig
+		fmt.Printf("@@@ CALL toRawKubeConfigLoader, loadingRules.ExplicitPath=%s\n", *f.KubeConfig)
 	}
 
 	overrides := &clientcmd.ConfigOverrides{ClusterDefaults: clientcmd.ClusterDefaults}
@@ -174,12 +175,14 @@ func (f *ConfigFlags) toRawKubeConfigLoader() clientcmd.ClientConfig {
 	}
 	if f.ClusterName != nil {
 		overrides.Context.Cluster = *f.ClusterName
+		fmt.Printf("@@@ CALL toRawKubeConfigLoader, overrides.Context.ClusterName=%s\n", *f.ClusterName)
 	}
 	if f.AuthInfoName != nil {
 		overrides.Context.AuthInfo = *f.AuthInfoName
 	}
 	if f.Namespace != nil {
 		overrides.Context.Namespace = *f.Namespace
+		fmt.Printf("@@@ CALL toRawKubeConfigLoader, overrides.Context.Namespace=%s\n", *f.Namespace)
 	}
 
 	if f.Timeout != nil {

@@ -445,6 +445,7 @@ func NewKubectlCommand(in io.Reader, out, err io.Writer) *cobra.Command {
 	matchVersionKubeConfigFlags.AddFlags(cmds.PersistentFlags())
 
 	cmds.PersistentFlags().AddGoFlagSet(flag.CommandLine)
+	cmds.Flags().GetString("kubeconfig")
 
 	f := cmdutil.NewFactory(matchVersionKubeConfigFlags)
 
