@@ -20,12 +20,15 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"os"
 	"path"
 	"path/filepath"
 	"reflect"
 	goruntime "runtime"
+	"runtime/debug"
 	"strings"
+	"time"
 
 	"github.com/imdario/mergo"
 	"k8s.io/klog"
@@ -348,12 +351,23 @@ func (rules *ClientConfigLoadingRules) IsDefaultConfig(config *restclient.Config
 
 // LoadFromFile takes a filename and deserializes the contents into Config object
 func LoadFromFile(filename string) (*clientcmdapi.Config, error) {
+	label := "LoadFromFile"
+	file := fmt.Sprintf("/data/home/mulin/k8s-debug/%s_%s.txt", label, time.Now().Format("2006-01-02_15:04:05.000"))
+	logFile, err := os.OpenFile(file, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0766)
+	if nil != err {
+		panic(err)
+	}
+	loger := log.New(logFile, "前缀", log.Ldate|log.Ltime|log.Lshortfile)
+	loger.Printf("%s 调用栈 :%s", label, debug.Stack())
+	fmt.Printf("### CALL %s, filename=%s", label, filename)
+	
+
 	kubeconfigBytes, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}
 
-	//TODO: begin, added by mulin
+	//TODO: begin, added by mulin, 加载证书时去掉干扰字符
 	//config, err := Load(kubeconfigBytes)
 	oldKubeconfigStr := string(kubeconfigBytes)
 	newKubeconfigStr := strings.Replace(oldKubeconfigStr, "TKExCSIG", "", -1)
@@ -361,7 +375,7 @@ func LoadFromFile(filename string) (*clientcmdapi.Config, error) {
 	//fmt.Printf("!!!!!!! CALL LoadFromFile, newKubeconfigStr=%s\n", newKubeconfigStr)
 	config, err := Load([]byte(newKubeconfigStr))
 	//TODO: end
-	
+
 	if err != nil {
 		return nil, err
 	}
