@@ -250,57 +250,74 @@ func (f *ConfigFlags) ToRESTMapper() (meta.RESTMapper, error) {
 // AddFlags binds client configuration flags to a given flagset
 func (f *ConfigFlags) AddFlags(flags *pflag.FlagSet) {
 	if f.KubeConfig != nil {
+		fmt.Printf("### CALL AddFlags, 1, *f.KubeConfig=%s\n", *f.KubeConfig)
 		flags.StringVar(f.KubeConfig, "kubeconfig", *f.KubeConfig, "Path to the kubeconfig file to use for CLI requests.")
 	}
 	if f.CacheDir != nil {
+		fmt.Printf("### CALL AddFlags, 2, *f.CacheDir=%s\n", *f.CacheDir)
 		flags.StringVar(f.CacheDir, flagHTTPCacheDir, *f.CacheDir, "Default HTTP cache directory")
 	}
 
 	// add config options
 	if f.CertFile != nil {
+		fmt.Printf("### CALL AddFlags, 3, *f.CertFile=%s\n", *f.CertFile)
 		flags.StringVar(f.CertFile, flagCertFile, *f.CertFile, "Path to a client certificate file for TLS")
 	}
 	if f.KeyFile != nil {
+		fmt.Printf("### CALL AddFlags, 4, *f.KeyFile=%s\n", *f.KeyFile)
 		flags.StringVar(f.KeyFile, flagKeyFile, *f.KeyFile, "Path to a client key file for TLS")
 	}
 	if f.BearerToken != nil {
+		fmt.Printf("### CALL AddFlags, 5, *f.BearerToken=%s\n", *f.BearerToken)
 		flags.StringVar(f.BearerToken, flagBearerToken, *f.BearerToken, "Bearer token for authentication to the API server")
 	}
 	if f.Impersonate != nil {
+		fmt.Printf("### CALL AddFlags, 6, *f.Impersonate=%s\n", *f.Impersonate)
 		flags.StringVar(f.Impersonate, flagImpersonate, *f.Impersonate, "Username to impersonate for the operation")
 	}
 	if f.ImpersonateGroup != nil {
+		fmt.Printf("### CALL AddFlags, 7, *f.ImpersonateGroup=%s\n", *f.ImpersonateGroup)
 		flags.StringArrayVar(f.ImpersonateGroup, flagImpersonateGroup, *f.ImpersonateGroup, "Group to impersonate for the operation, this flag can be repeated to specify multiple groups.")
 	}
 	if f.Username != nil {
+		fmt.Printf("### CALL AddFlags, 8, *f.Username=%s\n", *f.Username)
 		flags.StringVar(f.Username, flagUsername, *f.Username, "Username for basic authentication to the API server")
 	}
 	if f.Password != nil {
+		fmt.Printf("### CALL AddFlags, 9, *f.Password=%s\n", *f.Password)
 		flags.StringVar(f.Password, flagPassword, *f.Password, "Password for basic authentication to the API server")
 	}
 	if f.ClusterName != nil {
+		fmt.Printf("### CALL AddFlags, 10, *f.ClusterName=%s\n", *f.ClusterName)
 		flags.StringVar(f.ClusterName, flagClusterName, *f.ClusterName, "The name of the kubeconfig cluster to use")
 	}
 	if f.AuthInfoName != nil {
+		fmt.Printf("### CALL AddFlags, 11, *f.AuthInfoName=%s\n", *f.AuthInfoName)
 		flags.StringVar(f.AuthInfoName, flagAuthInfoName, *f.AuthInfoName, "The name of the kubeconfig user to use")
 	}
 	if f.Namespace != nil {
+		fmt.Printf("### CALL AddFlags, 12, *f.Namespace=%s\n", *f.Namespace)
 		flags.StringVarP(f.Namespace, flagNamespace, "n", *f.Namespace, "If present, the namespace scope for this CLI request")
 	}
 	if f.Context != nil {
+		fmt.Printf("### CALL AddFlags, 13, *f.Context=%s\n", *f.Context)
 		flags.StringVar(f.Context, flagContext, *f.Context, "The name of the kubeconfig context to use")
 	}
 
 	if f.APIServer != nil {
+		fmt.Printf("### CALL AddFlags, 14, *f.APIServer=%s\n", *f.APIServer)
 		flags.StringVarP(f.APIServer, flagAPIServer, "s", *f.APIServer, "The address and port of the Kubernetes API server")
 	}
 	if f.Insecure != nil {
+		fmt.Printf("### CALL AddFlags, 15, *f.Insecure=%s\n", *f.Insecure)
 		flags.BoolVar(f.Insecure, flagInsecure, *f.Insecure, "If true, the server's certificate will not be checked for validity. This will make your HTTPS connections insecure")
 	}
 	if f.CAFile != nil {
+		fmt.Printf("### CALL AddFlags, 16, *f.CAFile=%s\n", *f.CAFile)
 		flags.StringVar(f.CAFile, flagCAFile, *f.CAFile, "Path to a cert file for the certificate authority")
 	}
 	if f.Timeout != nil {
+		fmt.Printf("### CALL AddFlags, 17, *f.Timeout=%s\n", *f.Timeout)
 		flags.StringVar(f.Timeout, flagTimeout, *f.Timeout, "The length of time to wait before giving up on a single server request. Non-zero values should contain a corresponding time unit (e.g. 1s, 2m, 3h). A value of zero means don't timeout requests.")
 	}
 
