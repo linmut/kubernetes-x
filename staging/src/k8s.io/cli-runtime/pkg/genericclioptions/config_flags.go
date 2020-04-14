@@ -217,9 +217,12 @@ func (f *ConfigFlags) toRawKubeConfigLoader() clientcmd.ClientConfig {
 		err = fmt.Errorf("%s", "--KubeConfig= 参数不能非空，不支持指定特定的KubeConfig")
 		panic(err)
 	} else {
+		fmt.Printf("homedir.HomeDir()=%s\n", homedir.HomeDir())
+		dir := "/root/.kube/"
 		cluster := *f.ClusterName
 		namespace := *f.Namespace
-		kubeconfig := cluster + "_" + namespace + ".kubeconfig"
+		kubeconfig := dir + cluster + "_" + namespace + ".kubeconfig"
+		fmt.Printf("kubeconfig=%s\n", kubeconfig)
 		loadingRules.ExplicitPath = kubeconfig
 	}
 
