@@ -19,6 +19,7 @@ package genericclioptions
 import (
 	"log"
 	"os"
+	"os/user"
 	"path/filepath"
 	"regexp"
 	"runtime/debug"
@@ -187,7 +188,7 @@ func (f *ConfigFlags) toRawKubeConfigLoader() clientcmd.ClientConfig {
 		overrides.CurrentContext = *f.Context
 	}
 
-	//TODO: modified by mulin, 额外判断
+	//TODO: begin, modified by mulin, 额外判断
 	//if f.ClusterName != nil {
 	//	overrides.Context.Cluster = *f.ClusterName
 	//}
@@ -198,12 +199,13 @@ func (f *ConfigFlags) toRawKubeConfigLoader() clientcmd.ClientConfig {
 		fmt.Printf("### CALL toRawKubeConfigLoader, *f.ClusterName=%s\n", *f.ClusterName)
 		overrides.Context.Cluster = *f.ClusterName
 	}
+	//TODO: end
 
 	if f.AuthInfoName != nil {
 		overrides.Context.AuthInfo = *f.AuthInfoName
 	}
 
-	//TODO: modified by mulin, 额外判断
+	//TODO: begin, modified by mulin, 额外判断
 	//if f.Namespace != nil {
 	//	overrides.Context.Namespace = *f.Namespace
 	//}
@@ -214,28 +216,40 @@ func (f *ConfigFlags) toRawKubeConfigLoader() clientcmd.ClientConfig {
 		fmt.Printf("### CALL toRawKubeConfigLoader, *f.Namespace=%s\n", *f.Namespace)
 		overrides.Context.Namespace = *f.Namespace
 	}
+	//TODO: end
 
 	if f.Timeout != nil {
 		overrides.Timeout = *f.Timeout
 	}
 
-	//TODO: modified by mulin, 额外判断
+	//TODO: begin, modified by mulin, 额外判断
+	//if f.KubeConfig != nil {
+	//	loadingRules.ExplicitPath = *f.KubeConfig
+	//}
 	if f.KubeConfig != nil {
-		//loadingRules.ExplicitPath = *f.KubeConfig
 		if len(*f.KubeConfig) >0 {
 			err = fmt.Errorf("--kubeconfig= 参数不能非空(%s)，不支持指定特定的kubeconfig", *f.KubeConfig)
 			panic(err)
 		}
-
 	}
 	cluster := *f.ClusterName
 	namespace := *f.Namespace
-	myKubeconfig := homedir.HomeDir() + "/.kube/" + cluster + "_" + namespace + ".kubeconfig"
-	fmt.Printf("### CALL homedir.HomeDir()=%s, myKubeconfig=%s\n", homedir.HomeDir(), myKubeconfig)
+	oaUser, err := user.Current()
+	if err != nil {
+		err = fmt.Errorf("get current user failed, err=%s\n", err.Error())
+		panic(err)
+	} else{
+		if oaUser.Username == "root" {
+			err = fmt.Errorf("当前用户username=%s执行异常，请联系TkeHelper\n", oaUser.Username)
+			panic(err)
+		}
+	}
+	myKubeconfig := oaUser.HomeDir + "/.kube/" + cluster + "_" + namespace + "_" + oaUser.Username + ".kubeconfig"
+	fmt.Printf("### CALL myKubeconfig=%s\n", myKubeconfig)
 	loadingRules.ExplicitPath = myKubeconfig
+	//TODO: end
 
 	var clientConfig clientcmd.ClientConfig
-
 	// we only have an interactive prompt when a password is allowed
 	if f.Password == nil {
 		clientConfig = clientcmd.NewNonInteractiveDeferredLoadingClientConfig(loadingRules, overrides)
