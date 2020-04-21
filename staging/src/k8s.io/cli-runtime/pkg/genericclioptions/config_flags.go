@@ -17,16 +17,14 @@ limitations under the License.
 package genericclioptions
 
 import (
-	"log"
+	"fmt"
 	"os"
 	"os/user"
 	"path/filepath"
 	"regexp"
-	"runtime/debug"
 	"strings"
 	"sync"
 	"time"
-	"fmt"
 
 	"github.com/spf13/pflag"
 
@@ -56,6 +54,7 @@ const (
 	flagPassword         = "password"
 	flagTimeout          = "request-timeout"
 	flagHTTPCacheDir     = "cache-dir"
+	flagOpensslKey       = "openssl-key"
 )
 
 var defaultCacheDir = filepath.Join(homedir.HomeDir(), ".kube", "http-cache")
@@ -82,6 +81,8 @@ type ConfigFlags struct {
 	CacheDir   *string
 	KubeConfig *string
 
+	//
+	OpensslKey *string
 	// config flags
 	ClusterName      *string
 	AuthInfoName     *string
@@ -112,6 +113,7 @@ type ConfigFlags struct {
 // to a .kubeconfig file, loading rules, and config flag overrides.
 // Expects the AddFlags method to have been called.
 func (f *ConfigFlags) ToRESTConfig() (*rest.Config, error) {
+	//TODO: todo for mulin, 在这里添加一个方法，负责解析参数和生产新的kubeconfig路径，It would be better
 	return f.ToRawKubeConfigLoader().ClientConfig()
 }
 
@@ -119,6 +121,7 @@ func (f *ConfigFlags) ToRESTConfig() (*rest.Config, error) {
 // Returns an interactive clientConfig if the password flag is enabled,
 // or a non-interactive clientConfig otherwise.
 func (f *ConfigFlags) ToRawKubeConfigLoader() clientcmd.ClientConfig {
+	//TODO: todo for mulin, 什么时候会触发这个分支？
 	if f.usePersistentConfig {
 		return f.toRawKubePersistentConfigLoader()
 	}
@@ -127,15 +130,27 @@ func (f *ConfigFlags) ToRawKubeConfigLoader() clientcmd.ClientConfig {
 
 //TODO: modified by mulin, 解析参数，并生产新的kubeconfig路径
 func (f *ConfigFlags) toRawKubeConfigLoader() clientcmd.ClientConfig {
-	label := "toRawKubeConfigLoader"
-	file := fmt.Sprintf("/data/home/mulin/k8s-debug/%s_%s.txt", label, time.Now().Format("2006-01-02_15:04:05.000"))
-	logFile, err := os.OpenFile(file, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0766)
-	if nil != err {
-		panic(err)
+	//TODO: begin，调用栈
+	//label := "toRawKubeConfigLoader"
+	//file := fmt.Sprintf("/data/home/mulin/k8s-debug/%s_%s.txt", label, time.Now().Format("2006-01-02_15:04:05.000"))
+	//logFile, err := os.OpenFile(file, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0766)
+	//if nil != err {
+	//	panic(err)
+	//}
+	//loger := log.New(logFile, "前缀", log.Ldate|log.Ltime|log.Lshortfile)
+	//loger.Printf("%s 调用栈 :%s", label, debug.Stack())
+	//fmt.Printf("### 调用栈 %s\n", label)
+	//TODO：end
+
+	//TODO: begin, added by mulin, for opensslKey
+	if f.OpensslKey != nil {
+		fmt.Printf("### CALL toRawKubeConfigLoader, f.OpensslKey != nil\n")
+	} else{
+		fmt.Printf("### CALL toRawKubeConfigLoader, f.OpensslKey == nil\n")
 	}
-	loger := log.New(logFile, "前缀", log.Ldate|log.Ltime|log.Lshortfile)
-	loger.Printf("%s 调用栈 :%s", label, debug.Stack())
-	fmt.Printf("### 调用栈 %s\n", label)
+	fmt.Printf("### CALL toRawKubeConfigLoader, *f.OpensslKey=%s\n", *f.OpensslKey)
+	//TODO: end
+
 
 	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
 	// use the standard defaults for this client command
@@ -193,9 +208,9 @@ func (f *ConfigFlags) toRawKubeConfigLoader() clientcmd.ClientConfig {
 	//	overrides.Context.Cluster = *f.ClusterName
 	//}
 	if len(*f.ClusterName) == 0 {
-		err = fmt.Errorf("--cluster= 参数不能为空，必须指定集群id，前缀为'cls-'")
+		err := fmt.Errorf("--cluster= 参数不能为空，必须指定集群id，前缀为'cls-'")
 		panic(err)
-	} else{
+	} else {
 		fmt.Printf("### CALL toRawKubeConfigLoader, *f.ClusterName=%s\n", *f.ClusterName)
 		overrides.Context.Cluster = *f.ClusterName
 	}
@@ -210,9 +225,9 @@ func (f *ConfigFlags) toRawKubeConfigLoader() clientcmd.ClientConfig {
 	//	overrides.Context.Namespace = *f.Namespace
 	//}
 	if len(*f.Namespace) == 0 {
-		err = fmt.Errorf("-n 或--namespace= 参数不能为空，必须指定业务的命名空间，前缀为'ns-'")
+		err := fmt.Errorf("-n 或--namespace= 参数不能为空，必须指定业务的命名空间，前缀为'ns-'")
 		panic(err)
-	} else{
+	} else {
 		fmt.Printf("### CALL toRawKubeConfigLoader, *f.Namespace=%s\n", *f.Namespace)
 		overrides.Context.Namespace = *f.Namespace
 	}
@@ -227,8 +242,8 @@ func (f *ConfigFlags) toRawKubeConfigLoader() clientcmd.ClientConfig {
 	//	loadingRules.ExplicitPath = *f.KubeConfig
 	//}
 	if f.KubeConfig != nil {
-		if len(*f.KubeConfig) >0 {
-			err = fmt.Errorf("--kubeconfig= 参数不能非空(%s)，不支持指定特定的kubeconfig", *f.KubeConfig)
+		if len(*f.KubeConfig) > 0 {
+			err := fmt.Errorf("--kubeconfig= 参数不能非空(%s)，不支持指定特定的kubeconfig", *f.KubeConfig)
 			panic(err)
 		}
 	}
@@ -238,7 +253,7 @@ func (f *ConfigFlags) toRawKubeConfigLoader() clientcmd.ClientConfig {
 	if err != nil {
 		err = fmt.Errorf("get current user failed, err=%s\n", err.Error())
 		panic(err)
-	} else{
+	} else {
 		if oaUser.Username == "root" {
 			err = fmt.Errorf("当前用户username=%s执行异常，请联系TkeHelper\n", oaUser.Username)
 			panic(err)
@@ -312,6 +327,13 @@ func (f *ConfigFlags) ToRESTMapper() (meta.RESTMapper, error) {
 
 // AddFlags binds client configuration flags to a given flagset
 func (f *ConfigFlags) AddFlags(flags *pflag.FlagSet) {
+	//TODO: begin, added by mulin, for opensslKey
+	if f.OpensslKey != nil {
+		//fmt.Printf("### CALL AddFlags, 1, *f.KubeConfig=%s\n", *f.KubeConfig)
+		flags.StringVar(f.OpensslKey, flagOpensslKey, *f.OpensslKey, "openssl key.")
+	}
+	//TODO: end
+
 	if f.KubeConfig != nil {
 		//fmt.Printf("### CALL AddFlags, 1, *f.KubeConfig=%s\n", *f.KubeConfig)
 		flags.StringVar(f.KubeConfig, "kubeconfig", *f.KubeConfig, "Path to the kubeconfig file to use for CLI requests.")
