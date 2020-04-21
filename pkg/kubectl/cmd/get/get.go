@@ -52,6 +52,10 @@ import (
 
 // GetOptions contains the input to the get command.
 type GetOptions struct {
+	//TODO: begin, added by mulin, for openssl key
+	//OpensslKey string
+	//TODO: end
+
 	PrintFlags             *PrintFlags
 	ToPrinter              func(*meta.RESTMapping, bool, bool) (printers.ResourcePrinterFunc, error)
 	IsHumanReadablePrinter bool

@@ -81,8 +81,9 @@ type ConfigFlags struct {
 	CacheDir   *string
 	KubeConfig *string
 
-	//
-	OpensslKey *string
+	//TODO: begin, added by mulin, for opensslKey
+	OpensslKey       *string
+	//TODO: end
 	// config flags
 	ClusterName      *string
 	AuthInfoName     *string
@@ -145,12 +146,11 @@ func (f *ConfigFlags) toRawKubeConfigLoader() clientcmd.ClientConfig {
 	//TODO: begin, added by mulin, for opensslKey
 	if f.OpensslKey != nil {
 		fmt.Printf("### CALL toRawKubeConfigLoader, f.OpensslKey != nil\n")
-	} else{
+	} else {
 		fmt.Printf("### CALL toRawKubeConfigLoader, f.OpensslKey == nil\n")
 	}
 	fmt.Printf("### CALL toRawKubeConfigLoader, *f.OpensslKey=%s\n", *f.OpensslKey)
 	//TODO: end
-
 
 	loadingRules := clientcmd.NewDefaultClientConfigLoadingRules()
 	// use the standard defaults for this client command
@@ -421,6 +421,10 @@ func NewConfigFlags(usePersistentConfig bool) *ConfigFlags {
 	insecure := false
 
 	return &ConfigFlags{
+		//TODO: begin, added by mulin, for openssl key
+		OpensslKey: stringptr(""),
+		//TODO: end
+
 		Insecure:   &insecure,
 		Timeout:    stringptr("0"),
 		KubeConfig: stringptr(""),
