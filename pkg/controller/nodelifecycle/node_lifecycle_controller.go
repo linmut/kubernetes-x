@@ -17,7 +17,7 @@ limitations under the License.
 // The Controller sets tainted annotations on nodes.
 // Tainted nodes should not be used for new work loads and
 // some effort should be given to getting existing work
-// loads off of tainted nodes.
+// loads off of tainted nodes.monitorNodeHealth
 
 package nodelifecycle
 
@@ -657,6 +657,7 @@ func (nc *Controller) doEvictionPass() {
 // monitorNodeHealth verifies node health are constantly updated by kubelet, and
 // if not, post "NodeReady==ConditionUnknown". It also evicts all pods if node
 // is not ready or not reachable for a long period of time.
+// TODO：上层是nodeMonitorPeriod (小于 nodeMonitorGracePeriod), 所以这里的执行时间要比 nodeMonitorPeriod 小。
 func (nc *Controller) monitorNodeHealth() error {
 	// We are listing nodes from local cache as we can tolerate some small delays
 	// comparing to state from etcd and there is eventual consistency anyway.
@@ -694,7 +695,14 @@ func (nc *Controller) monitorNodeHealth() error {
 		var observedReadyCondition v1.NodeCondition
 		var currentReadyCondition *v1.NodeCondition
 		node := nodes[i].DeepCopy()
+
+		// TODO：上层是nodeMonitorPeriod (小于 nodeMonitorGracePeriod), 所以这里的执行时间要比 nodeMonitorPeriod 小。
 		if err := wait.PollImmediate(retrySleepTime, retrySleepTime*scheduler.NodeHealthUpdateRetry, func() (bool, error) {
+			// TODO：observedReadyCondition, APIServer 拿到的结果，最后一次更新；
+			// TODO：currentReadyCondition，修正后的当前实际状态；
+			// TODO：gracePeriod，；
+			// TODO：timeout = retrySleepTime*scheduler.NodeHealthUpdateRetry，小于上层 nodeMonitorPeriod。
+			// TODO：最长执行时间，并不是一定要执行这么长时间。
 			gracePeriod, observedReadyCondition, currentReadyCondition, err = nc.tryUpdateNodeHealth(node)
 			if err == nil {
 				return true, nil
@@ -718,9 +726,15 @@ func (nc *Controller) monitorNodeHealth() error {
 		}
 
 		decisionTimestamp := nc.now()
+
+		// TODO：必须有修正后的当前实际状态
+		// TODO：node condition包括了Ready、OutOfDisk、MemoryPressure、DiskPressure、PIDPressure、NetworkUnavailable，
+		// TODO：其中Ready 和另外五种，True和False是相反的，怎么统一？
 		if currentReadyCondition != nil {
 			// Check eviction timeout against decisionTimestamp
 			if observedReadyCondition.Status == v1.ConditionFalse {
+				// TODO：谁设置了useTaintBasedEvictions？
+				// TODO：if set to true Controller will taint Nodes with 'TaintNodeNotReady' and 'TaintNodeUnreachable' taints instead of evicting Pods itself.
 				if nc.useTaintBasedEvictions {
 					// We want to update the taint straight away if Node is already tainted with the UnreachableTaint
 					if taintutils.TaintExists(node.Spec.Taints, UnreachableTaintTemplate) {
@@ -735,6 +749,7 @@ func (nc *Controller) monitorNodeHealth() error {
 						)
 					}
 				} else {
+					// TODO：状态转换，已持续podEvictionTimeout
 					if decisionTimestamp.After(nc.nodeHealthMap[node.Name].readyTransitionTimestamp.Add(nc.podEvictionTimeout)) {
 						if nc.evictPods(node) {
 							klog.V(2).Infof("Node is NotReady. Adding Pods on Node %s to eviction queue: %v is later than %v + %v",

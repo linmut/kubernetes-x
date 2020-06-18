@@ -321,6 +321,7 @@ func (p *PriorityQueue) Add(pod *v1.Pod) error {
 	p.lock.Lock()
 	defer p.lock.Unlock()
 	pInfo := p.newPodInfo(pod)
+	//TODO: activeQ.Add时，如果已存在则更新，不是严格意义上的Add，所以，是否需要先get判断？
 	if err := p.activeQ.Add(pInfo); err != nil {
 		klog.Errorf("Error adding pod %v/%v to the scheduling queue: %v", pod.Namespace, pod.Name, err)
 		return err
@@ -475,11 +476,14 @@ func (p *PriorityQueue) flushBackoffQCompleted() {
 		if boTime.After(p.clock.Now()) {
 			return
 		}
+
+
 		_, err := p.podBackoffQ.Pop()
 		if err != nil {
 			klog.Errorf("Unable to pop pod %v from backoffQ despite backoff completion.", nsNameForPod(pod))
 			return
 		}
+		// TODO：不是事务型操作，前面pod已经从podBackoffQ队列删除，怎么保证Add到activeQ一定成功？
 		p.activeQ.Add(rawPodInfo)
 		defer p.cond.Broadcast()
 	}
@@ -525,6 +529,7 @@ func (p *PriorityQueue) Pop() (*v1.Pod, error) {
 		return nil, err
 	}
 	pInfo := obj.(*podInfo)
+	// TODO：为什么要自增？
 	p.schedulingCycle++
 	return pInfo.pod, err
 }
@@ -654,6 +659,7 @@ func (p *PriorityQueue) MoveAllToActiveQueue() {
 		}
 	}
 	p.unschedulableQ.clear()
+	// TODO：为什么要赋相同值？
 	p.moveRequestCycle = p.schedulingCycle
 	p.cond.Broadcast()
 }
